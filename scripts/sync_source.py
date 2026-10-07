@@ -129,6 +129,7 @@ def sync():
                      'appPermissions': {'entitlements': [], 'privacy': privacy}})
     source = {'name': 'iMacintoshPlus', 'identifier': 'com.imacintoshplus.source',
               'subtitle': 'iOS ports by iMacintoshPlus',
+              'iconURL': f'https://raw.githubusercontent.com/{REPOSITORY}/main/icons/source.png',
               'website': f'https://github.com/{REPOSITORY}', 'apps': apps, 'news': []}
     (ROOT / 'source.json').write_text(json.dumps(source, indent=2) + '\n')
     print(f'AltStore Classic source updated: {len(apps)} apps')
