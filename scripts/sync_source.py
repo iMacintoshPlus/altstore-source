@@ -72,12 +72,14 @@ def mirror(app, release, asset, data):
                             '--repo', REPOSITORY, '--target', 'main', '--title',
                             f'{APPS[app][0]} — {release["tag_name"]}', '--notes-file', str(notes),
                             '--draft'], check=True)
-        central = json.loads(gh('api', f'repos/{REPOSITORY}/releases/tags/{tag}'))
+        # A draft does not have a public tag yet; gh also searches draft releases.
+        central = json.loads(gh('release', 'view', tag, '--repo', REPOSITORY,
+                                '--json', 'assets,isDraft'))
         old_asset = next((a for a in central['assets'] if a['name'] == asset['name']), None)
         if old_asset is None or old_asset.get('digest') != 'sha256:' + digest:
             subprocess.run(['gh', 'release', 'upload', tag, str(ipa), str(checksum),
                             '--repo', REPOSITORY, '--clobber'], check=True)
-        if central['draft']:
+        if central['isDraft']:
             subprocess.run(['gh', 'release', 'edit', tag, '--repo', REPOSITORY,
                             '--draft=false', '--prerelease=' + str(release['prerelease']).lower()], check=True)
     return f'https://github.com/{REPOSITORY}/releases/download/{urllib.parse.quote(tag, safe="")}/{asset["name"]}'
