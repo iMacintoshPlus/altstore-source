@@ -1,0 +1,1 @@
+**`https://raw.githubusercontent.com/iMacintoshPlus/altstore-source/main/source.json` is a JSON repository that is compatible with the independent app distribution system used by AltStore, SideStore, and LiveContainer.**
