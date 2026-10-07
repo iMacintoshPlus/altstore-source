@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-"""Mirror approved iOS releases and generate an AltStore Classic source."""
+"""Store approved IPAs in the repository and generate an AltStore Classic source."""
 import hashlib
 import io
 import json
-import os
 from pathlib import Path, PurePosixPath
 import plistlib
 import re
 import subprocess
-import tempfile
 import urllib.request
 import urllib.parse
 import zipfile
@@ -56,34 +54,18 @@ def published_releases(repository):
 
 
 def mirror(app, release, asset, data):
-    tag = app + '-' + release['tag_name']
+    tag = release['tag_name']
+    if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._+-]*', tag):
+        raise ValueError('Release tag is not a safe folder name')
+    if len(data) >= 100 * 1024 * 1024:
+        raise ValueError('IPA exceeds GitHub repository file size limit')
+    folder = ROOT / 'ipas' / app / tag
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / asset['name']).write_bytes(data)
     digest = hashlib.sha256(data).hexdigest()
-    existing = subprocess.run(['gh', 'release', 'view', tag, '--repo', REPOSITORY,
-                               '--json', 'tagName'], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-    with tempfile.TemporaryDirectory() as temporary:
-        ipa = Path(temporary) / asset['name']
-        ipa.write_bytes(data)
-        checksum = Path(temporary) / 'SHA256SUMS'
-        checksum.write_text(f'{digest}  {asset["name"]}\n')
-        if existing.returncode:
-            notes = Path(temporary) / 'notes.txt'
-            notes.write_text(f'Approved iOS release mirrored from {release["html_url"]}.\n\n'
-                             'Unsigned IPA for sideloading. Original game content is not included.\n')
-            subprocess.run(['gh', 'release', 'create', tag, str(ipa), str(checksum),
-                            '--repo', REPOSITORY, '--target', 'main', '--title',
-                            f'{APPS[app][0]} — {release["tag_name"]}', '--notes-file', str(notes),
-                            '--draft'], check=True)
-        # A draft does not have a public tag yet; gh also searches draft releases.
-        central = json.loads(gh('release', 'view', tag, '--repo', REPOSITORY,
-                                '--json', 'assets,isDraft'))
-        old_asset = next((a for a in central['assets'] if a['name'] == asset['name']), None)
-        if old_asset is None or old_asset.get('digest') != 'sha256:' + digest:
-            subprocess.run(['gh', 'release', 'upload', tag, str(ipa), str(checksum),
-                            '--repo', REPOSITORY, '--clobber'], check=True)
-        if central['isDraft']:
-            subprocess.run(['gh', 'release', 'edit', tag, '--repo', REPOSITORY,
-                            '--draft=false', '--prerelease=' + str(release['prerelease']).lower()], check=True)
-    return f'https://github.com/{REPOSITORY}/releases/download/{urllib.parse.quote(tag, safe="")}/{asset["name"]}'
+    (folder / 'SHA256SUMS').write_text(f'{digest}  {asset["name"]}\n')
+    relative = (folder / asset['name']).relative_to(ROOT).as_posix()
+    return f'https://raw.githubusercontent.com/{REPOSITORY}/main/{urllib.parse.quote(relative, safe="/")}'
 
 
 def sync():
@@ -106,7 +88,7 @@ def sync():
             checksums = [a for a in release['assets'] if a['name'] == 'SHA256SUMS']
             if len(checksums) != 1:
                 raise ValueError('Release must have SHA256SUMS')
-            entries = [line.split() for line in download(checksums[0]['browser_download_url']).decode().splitlines()]
+            entries = [line.split() for line in download(checksums[0]['browser_download_url'] + '?asset=' + str(checksums[0]['id'])).decode().splitlines()]
             expected = [parts[0] for parts in entries if len(parts) == 2 and parts[1].lstrip('*') == asset['name']]
             if expected != [hashlib.sha256(data).hexdigest()]:
                 raise ValueError('Release IPA checksum mismatch')
@@ -134,7 +116,10 @@ def sync():
     source = {'name': 'iMacintoshPlus', 'identifier': 'com.imacintoshplus.source',
               'subtitle': 'iOS ports by iMacintoshPlus',
               'website': f'https://github.com/{REPOSITORY}', 'apps': apps, 'news': []}
-    (ROOT / 'source.json').write_text(json.dumps(source, indent=2) + '\n')
+    source_path = ROOT / 'source.json'
+    if source_path.exists():
+        source = {**json.loads(source_path.read_text()), 'apps': apps}
+    source_path.write_text(json.dumps(source, indent=2) + '\n')
     print(f'AltStore Classic source updated: {len(apps)} apps')
 
 
