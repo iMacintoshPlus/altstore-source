@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import plistlib
+import re
 import subprocess
 import tempfile
 import urllib.request
@@ -90,7 +91,10 @@ def sync():
     for app, (name, bundle, archive_name) in APPS.items():
         versions, seen, privacy = [], set(), {}
         for release in published_releases(f'iMacintoshPlus/{app}'):
-            assets = [a for a in release['assets'] if a['name'] == f'{name}-iOS-unsigned.ipa']
+            prefix = {'abyssal': 'abyssal-engine-', 'galaxian': 'gof1-'}[app]
+            pattern = re.escape(prefix) + r'[0-9][A-Za-z0-9._+-]*-ios\.ipa'
+            assets = [a for a in release['assets'] if a['name'] == f'{name}-iOS-unsigned.ipa'
+                      or re.fullmatch(pattern, a['name'])]
             if not assets:
                 continue
             if len(assets) != 1:
