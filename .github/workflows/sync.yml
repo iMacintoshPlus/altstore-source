@@ -1,0 +1,35 @@
+name: Update AltStore source
+on:
+  push:
+    branches: [main]
+    paths: ['requests/**']
+  workflow_dispatch:
+concurrency:
+  group: altstore-source
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: main
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Mirror published IPAs and generate source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/sync_source.py
+      - name: Publish source JSON
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add source.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Update source from approved iOS releases'
+          git pull --rebase origin main
+          git push origin HEAD:main
