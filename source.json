@@ -16,7 +16,7 @@
           "version": "1.17.6",
           "buildVersion": "1",
           "date": "2026-10-06T20:43:29Z",
-          "downloadURL": "https://github.com/iMacintoshPlus/altstore-source/releases/download/abyssal-v1.17.6-ios-candidate-1/Abyssal-iOS-unsigned.ipa",
+          "downloadURL": "https://github.com/iMacintoshPlus/altstore-source/releases/download/abyssal-v1.17.6-ios-candidate-1/abyssal-engine-1.17.6-ios.ipa",
           "size": 36643938,
           "minOSVersion": "14.0",
           "localizedDescription": "Unsigned iOS build for upstream v1.17.6.\r\n\r\nTest this IPA before publishing. If main is a review branch, merge its PR into main before publication.\r\n\r\niOS 14.0 minimum (iOS 14 compatibility unverified). Sign with a sideloading tool. Import your own supported DEEP JAR on first launch. Uses the Abyssal name/icon. No original game content or signing credentials are included.\r\n"
@@ -39,7 +39,7 @@
           "version": "1.1.0",
           "buildVersion": "1.1.0",
           "date": "2026-10-05T15:51:49Z",
-          "downloadURL": "https://github.com/iMacintoshPlus/altstore-source/releases/download/galaxian-v1.1.0-ios-candidate-8/Galaxian-iOS-unsigned.ipa",
+          "downloadURL": "https://github.com/iMacintoshPlus/altstore-source/releases/download/galaxian-v1.1.0-ios-candidate-8/gof1-1.1.0-ios.ipa",
           "size": 29367479,
           "minOSVersion": "14.0",
           "localizedDescription": "Unsigned iOS build for upstream v1.1.0.\r\n\r\niOS 14.0 minimum (older-device compatibility unverified). Sign with a sideloading tool. Import your own original game IPA on first launch. No original game content is included.\r\n"
